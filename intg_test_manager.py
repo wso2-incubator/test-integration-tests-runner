@@ -669,10 +669,15 @@ def build_snapshot_dist(dist_path):
     """Build the distribution
     """
     zip_name = dist_name + ZIP_FILE_EXTENSION
+    logger.info("Building snapshot with skip tests" )
     try:
         snapshot_build_dir_path = Path(workspace + "/" + product_id + "/")
-        subprocess.call(['mvn', 'clean', 'install', '-Dmaven.test.skip=true', '-B',
-                         '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'], cwd=snapshot_build_dir_path)
+        if sys.platform.startswith('win'):
+            subprocess.call(['mvn', 'clean', 'install', '-B', '-e',
+                             '-Dmaven.test.skip=true'], shell=True, cwd=snapshot_build_dir_path)
+        else:
+            subprocess.call(['mvn', 'clean', 'install', '-B', '-e',
+                             '-Dmaven.test.skip=true'], cwd=snapshot_build_dir_path)
     except Exception as e:
         logger.error("Error occurred while build the distribution",
                      exc_info=True)

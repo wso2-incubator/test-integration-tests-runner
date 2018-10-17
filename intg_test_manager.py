@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # importing required modules
+import glob
 import sys
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
@@ -33,9 +34,10 @@ from xml.dom import minidom
 import errno
 from subprocess import Popen, PIPE
 
-from intg_test_constant import TEST_PLAN_PROPERTY_FILE_NAME, INFRA_PROPERTY_FILE_NAME, LOG_FILE_NAME, PRODUCT_STORAGE_DIR_NAME, \
-    DEFAULT_DB_USERNAME, LOG_STORAGE, NS, ZIP_FILE_EXTENSION, TEST_OUTPUT_DIR_NAME, SURFACE_PLUGIN_ARTIFACT_ID, \
-    CARBON_NAME, VALUE_TAG, DEFAULT_ORACLE_SID, MYSQL_DB_ENGINE, ORACLE_DB_ENGINE, MSSQL_DB_ENGINE
+from intg_test_constant import TEST_PLAN_PROPERTY_FILE_NAME, INFRA_PROPERTY_FILE_NAME, LOG_FILE_NAME, \
+    PRODUCT_STORAGE_DIR_NAME, DEFAULT_DB_USERNAME, LOG_STORAGE, NS, ZIP_FILE_EXTENSION, TEST_OUTPUT_DIR_NAME, \
+    SURFACE_PLUGIN_ARTIFACT_ID, CARBON_NAME, VALUE_TAG, DEFAULT_ORACLE_SID, MYSQL_DB_ENGINE, \
+    ORACLE_DB_ENGINE, MSSQL_DB_ENGINE
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -85,6 +87,7 @@ db_password = None
 tag_name = None
 test_mode = None
 product_version = None
+wum_product_version = None
 database_config = {}
 storage_dir_abs_path = None
 use_custom_testng_file=None
@@ -106,6 +109,8 @@ def read_property_files():
     global product_id
     global database_config
     global test_mode
+    global wum_product_version
+    global use_custom_testng_file
 
 
     workspace = os.getcwd()
@@ -152,6 +157,10 @@ def read_property_files():
                         db_password = val.strip()
                     elif key == "TEST_MODE":
                         test_mode = val.strip()
+                    elif key == "WUM_PRODUCT_VERSION":
+                        wum_product_version = val.strip()
+                    elif key == "USE_CUSTOM_TESTNG":
+                        use_custom_testng_file = val.strip()
 
     else:
         raise Exception("Test Plan Property file or Infra Property file is not in the workspace: " + workspace)
@@ -181,6 +190,10 @@ def validate_property_readings():
         missing_values += " -DBPassword- "
     if test_mode is None:
         missing_values += " -TEST_MODE- "
+    if wum_product_version is None:
+        missing_values += " -WUM_PRODUCT_VERSION- "
+    if use_custom_testng_file is None:
+        missing_values += " -USE_CUSTOM_TESTNG- "
 
     if missing_values != "":
         logger.error('Invalid property file is found. Missing values: %s ', missing_values)
@@ -358,6 +371,16 @@ def get_dist_name(path):
     dist_name = artifact_id + "-" + product_version
     dist_zip_name = dist_name + ZIP_FILE_EXTENSION
     return dist_name
+
+
+def get_dist_name_wum():
+    global product_version
+    product_version=wum_product_version
+    os.chdir(PRODUCT_STORAGE_DIR_NAME)
+    name = glob.glob('*.zip')[0]
+    wum_dist_name=os.path.splitext(name)[0]
+    logger.info("wum_dist_name:" + wum_dist_name)
+    return wum_dist_name
 
 
 def setup_databases(db_names, meta_data):
@@ -556,9 +579,22 @@ def create_output_property_fle():
     """Create output property file which is used when generating email
     """
     output_property_file = open("output.properties", "w+")
-    git_url = git_repo_url + "/tree/" + git_branch
-    output_property_file.write("GIT_LOCATION=%s\r\n" % git_url)
-    output_property_file.write("GIT_REVISION=%s\r\n" % tag_name)
+    if test_mode == "WUM":
+        logger.info("PRODUCT GIT URL: " + git_repo_url)
+        # temporally fix. Needs to be change.get the git url without username and the password
+        head, sep, tail = git_repo_url.partition('//')
+        uri=head
+        head, sep, tail = git_repo_url.partition('@')
+        urn=tail
+        git_url=uri+"//"+urn
+        git_url = git_url + "/tree/" + git_branch
+        logger.info("GIT URL: " + git_url)
+        output_property_file.write("GIT_LOCATION=%s\r\n" % git_url)
+        output_property_file.write("GIT_REVISION=%s\r\n" % git_branch)
+    else:
+        git_url = git_repo_url + "/tree/" + git_branch
+        output_property_file.write("GIT_LOCATION=%s\r\n" % git_url)
+        output_property_file.write("GIT_REVISION=%s\r\n" % tag_name)
     output_property_file.close()
 
 

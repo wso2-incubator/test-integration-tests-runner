@@ -338,6 +338,7 @@ def run_mysql_script_file(db_name, script_path):
         if sql_part.strip() == '':
             continue
         connector.execute(sql_part)
+    conn.commit()
     conn.close()
 
 
@@ -390,7 +391,7 @@ def setup_databases(db_names, meta_data):
     engine = db_engine.upper()
     db_meta_data = meta_data
     if db_meta_data:
-        databases = db_meta_data["DB_SETUP"][product_id]
+        databases = db_meta_data["DB_SETUP"]
         if databases:
             for db_name in db_names:
                 db_scripts = databases[db_name]

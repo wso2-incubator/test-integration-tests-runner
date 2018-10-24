@@ -649,7 +649,7 @@ def attach_jolokia_agent(spath):
         sp = sp + ".sh"
         if Path.exists(Path(sp)):
             jolokia_agent = \
-                "    -javaagent:/opt/wso2/jolokia-jvm-1.6.0-agent.jar=port=8778,host=localhost,protocol=http \\\n"
+                "    -javaagent:/opt/testgrid/jolokia.jar=port=8778,host=localhost,protocol=http \\\n"
             with open(sp, "r") as in_file:
                 buf = in_file.readlines()
             with open(sp, "w") as out_file:

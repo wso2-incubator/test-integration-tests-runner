@@ -726,6 +726,8 @@ def build_snapshot_dist(dist_path):
     snapshot_zip_abs_path = Path(snapshot_target_path / zip_name)
 
     if os.path.exists(snapshot_zip_abs_path):
+        if not os.path.exists(storage_dir_path):
+            os.makedirs(storage_dir_path)
         shutil.copy2(snapshot_zip_abs_path, storage_dir_path)
         os.remove(snapshot_zip_abs_path)
     else:

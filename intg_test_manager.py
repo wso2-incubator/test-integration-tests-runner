@@ -749,3 +749,36 @@ def add_distribution_to_m2(storage, m2_path):
     else:
         compress_distribution(linux_m2_path, storage)
         shutil.rmtree(linux_m2_path, onerror=on_rm_error)
+
+
+def save_test_output(reports_paths):
+    report_folder = Path(workspace + "/" + TEST_OUTPUT_DIR_NAME + "/")
+    report_file_paths = reports_paths
+    if Path.exists(report_folder):
+        shutil.rmtree(report_folder)
+    if not Path.exists(report_folder):
+        Path(report_folder).mkdir(parents=True, exist_ok=True)
+    if report_file_paths:
+        for file in report_file_paths:
+            absolute_file_path = Path(workspace + "/" + product_id + "/" + file)
+            if Path.exists(absolute_file_path):
+                report_storage = Path(workspace + "/" + TEST_OUTPUT_DIR_NAME + "/")
+                copy_file(absolute_file_path, report_storage)
+                logger.info("Report successfully copied")
+            else:
+                logger.error("File doesn't contain in the given location: " + str(absolute_file_path))
+
+
+def set_custom_testng(testng, testng_svr):
+    testng_dest = testng
+    testng_svr_mgt_dest = testng_svr
+    if use_custom_testng_file.upper() == "TRUE":
+        testng_source = Path(workspace + "/" + "testng.xml")
+        testng_destination = Path(workspace + "/" + product_id + "/" + testng_dest)
+        testng_server_mgt_source = Path(workspace + "/" + "testng-server-mgt.xml")
+        testng_server_mgt_destination = Path(workspace + "/" + product_id + "/" + testng_svr_mgt_dest)
+        # replace testng source
+        replace_file(testng_source, testng_destination)
+        # replace testng server mgt source
+        replace_file(testng_server_mgt_source, testng_server_mgt_destination)
+        logger.info("=== Customized testng files are copied to destination. ===")

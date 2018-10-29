@@ -360,28 +360,30 @@ def get_dist_name(path):
     global dist_name
     global dist_zip_name
     global product_version
-    dist_pom_path = Path(workspace + "/" + product_id + "/" + path)
-    if sys.platform.startswith('win'):
-        dist_pom_path = winapi_path(dist_pom_path)
-    ET.register_namespace('', NS['d'])
-    artifact_tree = ET.parse(dist_pom_path)
-    artifact_root = artifact_tree.getroot()
-    parent = artifact_root.find('d:parent', NS)
-    artifact_id = artifact_root.find('d:artifactId', NS).text
-    product_version = parent.find('d:version', NS).text
-    dist_name = artifact_id + "-" + product_version
-    dist_zip_name = dist_name + ZIP_FILE_EXTENSION
+    if test_mode == "WUM":
+        product_version=wum_product_version
+        dist_name = get_dist_name_wum()
+    else:
+        dist_pom_path = Path(workspace + "/" + product_id + "/" + path)
+        if sys.platform.startswith('win'):
+            dist_pom_path = winapi_path(dist_pom_path)
+        ET.register_namespace('', NS['d'])
+        artifact_tree = ET.parse(dist_pom_path)
+        artifact_root = artifact_tree.getroot()
+        parent = artifact_root.find('d:parent', NS)
+        artifact_id = artifact_root.find('d:artifactId', NS).text
+        product_version = parent.find('d:version', NS).text
+        dist_name = artifact_id + "-" + product_version
+        dist_zip_name = dist_name + ZIP_FILE_EXTENSION
     return dist_name
 
 
 def get_dist_name_wum():
-    global product_version
-    product_version=wum_product_version
     os.chdir(PRODUCT_STORAGE_DIR_NAME)
-    name = glob.glob('*.zip')[0]
-    wum_dist_name=os.path.splitext(name)[0]
-    logger.info("wum_dist_name:" + wum_dist_name)
-    return wum_dist_name
+    name = glob.glob('*-' + product_version)[0]
+    #dist_name=os.path.splitext(name)[0]
+    logger.info("wum dist_name: " + name)
+    return name
 
 
 def setup_databases(db_names, meta_data):

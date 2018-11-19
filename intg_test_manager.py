@@ -34,7 +34,7 @@ from xml.dom import minidom
 import errno
 from subprocess import Popen, PIPE
 
-from intg_test_constant import TEST_PLAN_PROPERTY_FILE_NAME, INFRA_PROPERTY_FILE_NAME, LOG_FILE_NAME, \
+from intg_test_constant import DEPLOYMENT_PROPERTY_FILE_NAME, LOG_FILE_NAME, \
     PRODUCT_STORAGE_DIR_NAME, DEFAULT_DB_USERNAME, LOG_STORAGE, NS, ZIP_FILE_EXTENSION, TEST_OUTPUT_DIR_NAME, \
     SURFACE_PLUGIN_ARTIFACT_ID, CARBON_NAME, VALUE_TAG, DEFAULT_ORACLE_SID, MYSQL_DB_ENGINE, \
     ORACLE_DB_ENGINE, MSSQL_DB_ENGINE
@@ -115,12 +115,10 @@ def read_property_files():
 
     workspace = os.getcwd()
     property_file_paths = []
-    test_plan_prop_path = Path(workspace + "/" + TEST_PLAN_PROPERTY_FILE_NAME)
-    infra_prop_path = Path(workspace + "/" + INFRA_PROPERTY_FILE_NAME)
+    deployment_prop_path = Path(workspace + "/" + DEPLOYMENT_PROPERTY_FILE_NAME)
 
-    if Path.exists(test_plan_prop_path) and Path.exists(infra_prop_path):
-        property_file_paths.append(test_plan_prop_path)
-        property_file_paths.append(infra_prop_path)
+    if Path.exists(deployment_prop_path):
+        property_file_paths.append(deployment_prop_path)
 
         for path in property_file_paths:
             with open(path, 'r') as filehandle:

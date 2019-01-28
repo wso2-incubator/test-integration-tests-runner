@@ -27,6 +27,8 @@ import pymysql
 import sqlparse
 import stat
 import re
+import os.path
+import getpass
 import fnmatch
 from pathlib import Path
 import urllib.request as urllib2
@@ -91,6 +93,8 @@ wum_product_version = None
 database_config = {}
 storage_dir_abs_path = None
 use_custom_testng_file=None
+githubsshkey=None
+sshKeyvalue=None
 
 
 def read_property_files():
@@ -111,6 +115,8 @@ def read_property_files():
     global test_mode
     global wum_product_version
     global use_custom_testng_file
+    global githubsshkey
+    global sshKeyvalue
 
 
     workspace = os.getcwd()
@@ -159,7 +165,15 @@ def read_property_files():
                         wum_product_version = val.strip()
                     elif key == "USE_CUSTOM_TESTNG":
                         use_custom_testng_file = val.strip()
-
+                    elif key == "githubSshKey":
+                        githubsshkey = val.strip()
+                        # ssh-key arrange with the correct key format.
+                        githubKeyStripStart =  githubsshkey.strip( '-----BEGIN RSA PRIVATE KEY-----' )
+                        replaced_key = githubKeyStripStart.replace(' ', '\n')
+                        keyend = "-----END RSA PRIVATE KEY-----"
+                        keystart = "-----BEGIN RSA PRIVATE KEY-----"
+                        sshKey = replaced_key[:-1]
+                        sshKeyvalue = keystart + '\n' + sshKey + "==\n" + keyend
     else:
         raise Exception("Test Plan Property file or Infra Property file is not in the workspace: " + workspace)
 
@@ -192,6 +206,8 @@ def validate_property_readings():
         missing_values += " -WUM_PRODUCT_VERSION- "
     if use_custom_testng_file is None:
         missing_values += " -USE_CUSTOM_TESTNG- "
+    if githubsshkey is None:
+        missing_values += " -githubSshKey- "
 
     if missing_values != "":
         logger.error('Invalid property file is found. Missing values: %s ', missing_values)
@@ -358,30 +374,33 @@ def get_dist_name(path):
     global dist_name
     global dist_zip_name
     global product_version
-    if test_mode == "WUM":
-        product_version=wum_product_version
-        dist_name = get_dist_name_wum()
-    else:
-        dist_pom_path = Path(workspace + "/" + product_id + "/" + path)
-        if sys.platform.startswith('win'):
-            dist_pom_path = winapi_path(dist_pom_path)
-        ET.register_namespace('', NS['d'])
-        artifact_tree = ET.parse(dist_pom_path)
-        artifact_root = artifact_tree.getroot()
-        parent = artifact_root.find('d:parent', NS)
-        artifact_id = artifact_root.find('d:artifactId', NS).text
-        product_version = parent.find('d:version', NS).text
-        dist_name = artifact_id + "-" + product_version
-        dist_zip_name = dist_name + ZIP_FILE_EXTENSION
+
+    dist_pom_path = Path(workspace + "/" + product_id + "/" + path)
+    if sys.platform.startswith('win'):
+        dist_pom_path = winapi_path(dist_pom_path)
+    ET.register_namespace('', NS['d'])
+    artifact_tree = ET.parse(dist_pom_path)
+    artifact_root = artifact_tree.getroot()
+    parent = artifact_root.find('d:parent', NS)
+    artifact_id = artifact_root.find('d:artifactId', NS).text
+    product_version = parent.find('d:version', NS).text
+    dist_name = artifact_id + "-" + product_version
+    dist_zip_name = dist_name + ZIP_FILE_EXTENSION
     return dist_name
 
 
 def get_dist_name_wum():
+    global dist_name
+    global dist_zip_name
+    global product_version
+
     os.chdir(PRODUCT_STORAGE_DIR_NAME)
-    name = glob.glob('*-' + product_version)[0]
-    #dist_name=os.path.splitext(name)[0]
-    logger.info("wum dist_name: " + name)
-    return name
+    product_version=wum_product_version
+    #name = glob.glob('*-' + product_version)[0]
+    name = glob.glob('*.zip')[0]
+    dist_name = os.path.splitext(name)[0]
+    logger.info("wum dist_name: " + dist_name)
+    return dist_name
 
 
 def setup_databases(db_names, meta_data):
@@ -470,15 +489,33 @@ def build_module(module_path):
                         cwd=module_path)
     logger.info('Module build is completed. Module: ' + str(module_path))
 
+def build_module_support(module_path):
+    """Build a given module.
+    """
+    if sys.platform.startswith('win'):
+        logger.info('Start building Module: ' + str(module_path))
+        subprocess.call(['mvn', '--settings', 'uat-nexus-settings.xml', 'clean', 'install', '-fae', '-B',
+                         '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'],
+                        shell=True, cwd=module_path)
+    else:
+        logger.info('Start building Module: ' + str(module_path))
+        subprocess.call(['mvn', '--settings', 'uat-nexus-settings.xml', 'clean', 'install', '-fae', '-B',
+                         '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'],
+                        cwd=module_path)
+    logger.info('Module build is completed with nexus. Module: ' + str(module_path))
 
 def clone_repo():
     """Clone the product repo
     """
     try:
-        subprocess.call(['git', 'clone', '--branch', git_branch, git_repo_url], cwd=workspace)
-        logger.info('product repository cloning is done.')
+        if test_mode == "WUM":
+            subprocess.call(['bash', 'clone_product_repo_wum.sh', sshKeyvalue, git_branch, git_repo_url])
+        else:
+            subprocess.call(['git', 'clone', '--branch', git_branch, git_repo_url], cwd=workspace)
+            logger.info('product repository cloning is done.')
     except Exception as e:
         logger.error("Error occurred while cloning the product repo: ", exc_info=True)
+
 
 
 def get_latest_tag_name():
@@ -689,7 +726,6 @@ def modify_distribution_name(element):
     return '/'.join(temp)
 
 
-
 def compress_distribution(distribution_path, root_dir):
     """Compress the distribution directory to a given location.
     """
@@ -739,7 +775,8 @@ def add_distribution_to_m2(storage, m2_path):
     """
     home = Path.home()
     m2_rel_path = ".m2/repository/org/wso2/" + m2_path
-    linux_m2_path = home / m2_rel_path / product_version / dist_name
+    #linux_m2_path = home / m2_rel_path / product_version / dist_name
+    linux_m2_path = os.path.join(home,m2_rel_path,product_version,dist_name)
     windows_m2_path = Path("/Documents and Settings/Administrator/" + m2_rel_path + "/" + product_version + "/" + dist_name)
     if sys.platform.startswith('win'):
         windows_m2_path = winapi_path(windows_m2_path)
@@ -782,3 +819,4 @@ def set_custom_testng(testng, testng_svr):
         # replace testng server mgt source
         replace_file(testng_server_mgt_source, testng_server_mgt_destination)
         logger.info("=== Customized testng files are copied to destination. ===")
+

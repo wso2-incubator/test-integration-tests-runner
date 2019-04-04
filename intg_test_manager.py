@@ -764,8 +764,10 @@ def build_snapshot_dist(dist_path):
     if os.path.exists(snapshot_zip_abs_path):
         if not os.path.exists(storage_dir_path):
             os.makedirs(storage_dir_path)
-        shutil.copy2(snapshot_zip_abs_path, storage_dir_path)
+        # Remove the zip file and downloading the distribution from jenkins.
         os.remove(snapshot_zip_abs_path)
+        get_latest_stable_dist()
+
     else:
         print("The file does not exist")
 

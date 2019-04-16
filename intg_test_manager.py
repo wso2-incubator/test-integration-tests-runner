@@ -602,7 +602,7 @@ def get_latest_stable_dist():
     """Download the latest stable distribution
     """
     build_num_artifact = get_latest_stable_artifacts_api()
-    build_num_artifact = re.sub(r'http.//(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})', "https://wso2.org", build_num_artifact)
+    build_num_artifact = re.sub(r'http.//(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})', "https://wso2.org", str(build_num_artifact))
     if build_num_artifact is None:
         raise Exception("Error occured while getting latest stable build artifact API path")
     relative_path = get_relative_path_of_dist_storage(build_num_artifact + "api/xml")

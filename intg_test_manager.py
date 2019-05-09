@@ -747,9 +747,11 @@ def build_snapshot_dist(dist_path):
         snapshot_build_dir_path = Path(workspace + "/" + product_id + "/")
         if sys.platform.startswith('win'):
             subprocess.call(['mvn', 'clean', 'install', '-B', '-e',
+                             '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn',
                              '-Dmaven.test.skip=true'], shell=True, cwd=snapshot_build_dir_path)
         else:
             subprocess.call(['mvn', 'clean', 'install', '-B', '-e',
+                             '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn',
                              '-Dmaven.test.skip=true'], cwd=snapshot_build_dir_path)
     except Exception as e:
         logger.error("Error occurred while build the distribution",

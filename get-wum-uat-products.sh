@@ -116,8 +116,8 @@ getChannelList() {
 #               if [ ${TEST_TYPE} == "$TEST_TYPE_INTG" ]; then
 #	            echo "wum-intg-test-"$product"-"$version"-"$channel >> $JOB_LIST
 #	           else
-#	            echo "wum-sce-test-"$product"-"$version"-"$channel >> $JOB_LIST
-	            echo "test-"$product"-"$version"-"$channel >> $JOB_LIST
+	            echo "wum-sce-test-"$product"-"$version"-"$channel >> $JOB_LIST
+#	            echo "test-"$product"-"$version"-"$channel >> $JOB_LIST
 #	           fi
             done < "$CHANNEL_LIST"
     done < "$PRODUCT_LIST"

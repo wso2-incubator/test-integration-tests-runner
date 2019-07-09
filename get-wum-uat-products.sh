@@ -69,7 +69,7 @@ getTimestampLive() {
 #Get timestamp by calling to WUM UAT environment to get the latest live synced timestamp
 getTimestampUAT() {
 	echo "GET Timestamp in UAT"
-    uri="https://api.updates.wso2.com/t/wso2umuat/updates/3.0.0/timestamps/latest"
+    uri="https://gateway.api.cloud.wso2.com/t/wso2umuat/updates/3.0.0/timestamps/latest"
     #echo "Calling URI (GET): " ${uri}
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${uat_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response

@@ -28,6 +28,7 @@ JOB_LIST=${JOB_LIST}
 PRODUCT_ID=${PRODUCT_ID}
 PRODUCT_ID_LIST=${PRODUCT_ID_LIST}
 
+
 #Generating access token for WUM Live environment to get the latest live synced timestamp
 createAccessTokenLive() {
 	echo "Generating Access Token for Live"
@@ -62,7 +63,7 @@ getTimestampLive() {
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${live_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response
     live_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
-
+		echo $live_timestamp
 		#echo "Live timestamp: $live_timestamp"
 }
 
@@ -74,7 +75,7 @@ getTimestampUAT() {
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${uat_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response
     uat_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
-
+		echo $uat_timestamp
 		#echo "UAT timestamp: $uat_timestamp"
 }
 
@@ -160,37 +161,23 @@ getProductIdList(){
 
 }
 
-getUpdateStatus(){
-	#generate access token for Live and UAT
-	createAccessTokenLive; createAccessTokenUAT
-
-	#get the latest timestamps in Live and UAT
-	getTimestampLive; getTimestampUAT
-
-	if [ ${live_timestamp} -eq ${uat_timestamp} ]; then
-		return 0;
-	fi
-}
-
-getJobList(){
-	#get products with newest UAT updates.
-	$(getProductList)
-
-	#get channel list for each product
- 	$(getChannelList)
-
-	#get Id for each product
-	$(getProductIdList)
-}
-
 args=$1
 
 case $args in
-	--check-update-status)
-		getUpdateStatus
+	--get-live-timestamp)
+		createAccessTokenLive
+		getTimestampLive
+		;;
+	--get-uat-timestamp)
+		createAccessTokenUAT
+		getTimestampUAT
 		;;
  	--get-job-list)
-		getJobList
+		live_timestamp=$2
+		createAccessTokenUAT
+		getProductList
+		getChannelList
+		getProductIdList
 		;;
 	*)
 		echo "Invalid argument. Please try again."

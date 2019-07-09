@@ -162,10 +162,10 @@ getProductIdList(){
 
 getUpdateStatus(){
 	#generate access token for Live and UAT
-	$(createAccessTokenLive); $(createAccessTokenUAT)
+	createAccessTokenLive; createAccessTokenUAT
 
 	#get the latest timestamps in Live and UAT
-	$(getTimestampLive); $(getTimestampUAT)
+	getTimestampLive; getTimestampUAT
 
 	if [ ${live_timestamp} -eq ${uat_timestamp} ]; then
 		return 0;

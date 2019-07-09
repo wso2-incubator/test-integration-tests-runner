@@ -62,6 +62,20 @@ getTimestampLive() {
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${live_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response
     live_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
+
+		echo "Live timestamp: $live_timestamp"
+}
+
+#Get timestamp by calling to WUM UAT environment to get the latest live synced timestamp
+getTimestampUAT() {
+	echo "GET Timestamp in UAT"
+    uri="https://api.updates.wso2.com/t/wso2umuat/updates/3.0.0/timestamps/latest"
+    #echo "Calling URI (GET): " ${uri}
+    curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${uat_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
+    #get only the timestamp value from the json response
+    uat_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
+
+		echo "UAT timestamp: $uat_timestamp"
 }
 
 #Get the product list in WUM UAT environment
@@ -89,7 +103,7 @@ getProductList() {
 	   echo "There are WUM updated product packs in UAT."
 	else
   	  echo "There is/are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
-  	  exit 0
+  	  exit 0 #TO DO: error handling here ... check for updates before trigering the build.
 	fi
 }
 

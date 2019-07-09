@@ -63,7 +63,7 @@ getTimestampLive() {
     #get only the timestamp value from the json response
     live_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
 
-		echo "Live timestamp: $live_timestamp"
+		#echo "Live timestamp: $live_timestamp"
 }
 
 #Get timestamp by calling to WUM UAT environment to get the latest live synced timestamp
@@ -75,7 +75,7 @@ getTimestampUAT() {
     #get only the timestamp value from the json response
     uat_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
 
-		echo "UAT timestamp: $uat_timestamp"
+		#echo "UAT timestamp: $uat_timestamp"
 }
 
 #Get the product list in WUM UAT environment
@@ -160,10 +160,38 @@ getProductIdList(){
 
 }
 
-createAccessTokenLive
-createAccessTokenUAT
-getTimestampLive
-getTimestampUAT
-getProductList
-getChannelList
-getProductIdList
+getUpdateStatus(){
+	#generate access token for Live and UAT
+	$(createAccessTokenLive); $(createAccessTokenUAT)
+
+	#get the latest timestamps in Live and UAT
+	$(getTimestampLive); $(getTimestampUAT)
+
+	if [ ${live_timestamp} -eq ${uat_timestamp} ]; then
+		return 0;
+	fi
+}
+
+getJobList(){
+	#get products with newest UAT updates.
+	$(getProductList)
+
+	#get channel list for each product
+ 	$(getChannelList)
+
+	#get Id for each product
+	$(getProductIdList)
+}
+
+args=$1
+
+case $args in
+	--check-update-status)
+		getUpdateStatus
+		;;
+ 	--get-job-list)
+		getJobList
+		;;
+	*)
+		echo "Invalid argument. Please try again."
+esac

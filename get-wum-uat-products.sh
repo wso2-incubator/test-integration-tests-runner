@@ -28,7 +28,6 @@ JOB_LIST=${JOB_LIST}
 PRODUCT_ID=${PRODUCT_ID}
 PRODUCT_ID_LIST=${PRODUCT_ID_LIST}
 
-
 #Generating access token for WUM Live environment to get the latest live synced timestamp
 createAccessTokenLive() {
 	echo "Generating Access Token for Live"
@@ -63,8 +62,9 @@ getTimestampLive() {
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${live_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response
     live_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
+
+		# stdout live timestamp will be retrieved from WUMUpdateVerifier.groovy
 		echo $live_timestamp
-		#echo "Live timestamp: $live_timestamp"
 }
 
 #Get timestamp by calling to WUM UAT environment to get the latest live synced timestamp
@@ -75,8 +75,9 @@ getTimestampUAT() {
     curl -s -X GET -H "${HEADER_ACCEPT}" -H "Authorization:Bearer ${uat_access_token}" "${uri}" --output "${RESPONSE_TIMESTAMP}"
     #get only the timestamp value from the json response
     uat_timestamp=$( jq -r ".timestamp" $RESPONSE_TIMESTAMP )
+
+		# stdout uat timestamp will be retrieved from WUMUpdateVerifier.groovy
 		echo $uat_timestamp
-		#echo "UAT timestamp: $uat_timestamp"
 }
 
 #Get the product list in WUM UAT environment
@@ -104,7 +105,7 @@ getProductList() {
 	   echo "There are WUM updated product packs in UAT."
 	else
   	  echo "There is/are no updated product packs for the given timestamp in UAT. Hence Skipping the process."
-  	  exit 0 #TO DO: error handling here ... check for updates before trigering the build.
+  	  exit 0
 	fi
 }
 
@@ -163,22 +164,31 @@ getProductIdList(){
 
 args=$1
 
-case $args in
-	--get-live-timestamp)
-		createAccessTokenLive
-		getTimestampLive
-		;;
-	--get-uat-timestamp)
-		createAccessTokenUAT
-		getTimestampUAT
-		;;
- 	--get-job-list)
-		live_timestamp=$2
-		createAccessTokenUAT
-		getProductList
-		getChannelList
-		getProductIdList
-		;;
-	*)
-		echo "Invalid argument. Please try again."
-esac
+if [[ -z $args ]]; then
+	createAccessTokenLive
+	createAccessTokenUAT
+	getTimestampLive
+	getProductList
+	getChannelList
+	getProductIdList
+else
+	case $args in
+		--get-live-timestamp)
+			createAccessTokenLive
+			getTimestampLive
+			;;
+		--get-uat-timestamp)
+			createAccessTokenUAT
+			getTimestampUAT
+			;;
+	 	--get-job-list)
+			live_timestamp=$2
+			createAccessTokenUAT
+			getProductList
+			getChannelList
+			getProductIdList
+			;;
+		*)
+			echo "Invalid argument. Please try again."
+	esac
+fi

@@ -480,14 +480,14 @@ def build_module(module_path):
     """
     logger.info('Start building a module. Module: ' + str(module_path))
     if sys.platform.startswith('win'):
-        subprocess.call(['mvn', 'clean', 'install', '-fae', '-B',
+        subprocess.call(['mvn', 'clean', 'install','-P', 'testgrid','-fae', '-B',
                          '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'],
                         shell=True, cwd=module_path)
     else:
-        subprocess.call(['mvn', 'clean', 'install', '-fae', '-B',
+        subprocess.call(['mvn', 'clean', 'install', '-P', 'testgrid', '-fae', '-B',
                          '-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'],
                         cwd=module_path)
-    logger.info('Module build is completed. Module: ' + str(module_path))
+    logger.info('Module build is completed. Module : ' + str(module_path))
 
 def build_module_support(module_path):
     """Build a given module.

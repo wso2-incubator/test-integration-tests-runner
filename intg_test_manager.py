@@ -269,19 +269,19 @@ def run_sqlserver_commands(query):
     """
     subprocess.call(
         ['sqlcmd', '-S', db_host, '-U', database_config['user'], '-P', database_config['password'], '-Q', query])
-    
+
 def create_postgresql_database(db_name):
     """ Create database from postgres client
     """
     os.environ["PGPASSWORD"]=database_config['password']
-   subprocess.call(['createdb', '-h', db_host, '-U',database_config['user'],db_name])
+    subprocess.call(['createdb', '-h', db_host, '-U',database_config['user'],db_name])
 
 
 def run_postgresql_scipt(db_name,script_file):
     """ Create database from postgres client
     """
     os.environ["PGPASSWORD"]=database_config['password']
-   subprocess.call(['psql', '-h', db_host, '-U',database_config['user'] ,'-d',db_name,'-f',script_file])
+    subprocess.call(['psql', '-h', db_host, '-U',database_config['user'] ,'-d',db_name,'-f',script_file])
 
 
 def get_mysql_connection(db_name=None):
@@ -439,7 +439,7 @@ def setup_databases(db_names, meta_data):
                         create_oracle_user(db_name)
                     elif engine == 'POSTGRES':
                         create_postgresql_database(db_name)
-   
+
                 else:
                     if engine == 'SQLSERVER-SE':
                         # create database for MsSQL
@@ -468,7 +468,7 @@ def setup_databases(db_names, meta_data):
                         for db_script in db_scripts:
                             path = base_path / db_script
                             run_postgresql_scipt(db_name,path)
-                                              
+
             logger.info('Database setting up is done.')
         else:
             raise Exception("Database setup configuration is not defined in the constant file")
@@ -846,4 +846,3 @@ def set_custom_testng(testng, testng_svr):
         # replace testng server mgt source
         replace_file(testng_server_mgt_source, testng_server_mgt_destination)
         logger.info("=== Customized testng files are copied to destination. ===")
-

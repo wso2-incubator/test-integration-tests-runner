@@ -269,6 +269,19 @@ def run_sqlserver_commands(query):
     """
     subprocess.call(
         ['sqlcmd', '-S', db_host, '-U', database_config['user'], '-P', database_config['password'], '-Q', query])
+    
+def create_postgresql_database(db_name):
+    """ Create database from postgres client
+    """
+    os.environ["PGPASSWORD"]=database_config['password']
+   subprocess.call(['createdb', '-h', db_host, '-U',database_config['user'],db_name])
+
+
+def run_postgresql_scipt(db_name,script_file):
+    """ Create database from postgres client
+    """
+    os.environ["PGPASSWORD"]=database_config['password']
+   subprocess.call(['psql', '-h', db_host, '-U',database_config['user'] ,'-d',db_name,'-f',script_file])
 
 
 def get_mysql_connection(db_name=None):
@@ -424,6 +437,9 @@ def setup_databases(db_names, meta_data):
                     elif engine == 'ORACLE-SE2':
                         # create database for Oracle
                         create_oracle_user(db_name)
+                    elif engine == 'POSTGRES':
+                        create_postgresql_database(db_name)
+   
                 else:
                     if engine == 'SQLSERVER-SE':
                         # create database for MsSQL
@@ -445,7 +461,14 @@ def setup_databases(db_names, meta_data):
                         # run db script
                         for db_script in db_scripts:
                             path = base_path / db_script
-                            run_oracle_script('@{0}'.format(str(path)), db_name)
+                            run_oracle_script('@{0}'.format(str(path)), db_name
+                    elif engine == 'POSTGRES':
+                        create_postgresql_database(db_name)
+                        # run db script
+                        for db_script in db_scripts:
+                            path = base_path / db_script
+                            run_postgresql_scipt(db_name,path)
+                                              
             logger.info('Database setting up is done.')
         else:
             raise Exception("Database setup configuration is not defined in the constant file")

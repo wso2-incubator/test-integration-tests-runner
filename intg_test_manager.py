@@ -461,7 +461,7 @@ def setup_databases(db_names, meta_data):
                         # run db script
                         for db_script in db_scripts:
                             path = base_path / db_script
-                            run_oracle_script('@{0}'.format(str(path)), db_name
+                            run_oracle_script('@{0}'.format(str(path)), db_name)
                     elif engine == 'POSTGRES':
                         create_postgresql_database(db_name)
                         # run db script

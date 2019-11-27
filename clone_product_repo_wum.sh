@@ -36,6 +36,8 @@ fi
 # Add ssh key to the agent
 ssh-add ~/.ssh/id_rsa
 
-# clone the product
-ssh-agent bash -c "ssh-add ~/.ssh/id_rsa; git clone --branch $2 $3"
+# List fingerprints of all identities
+ssh-add -l
 
+# clone the specified branch of the specified product repository
+ssh-agent bash -c "ssh-add ~/.ssh/id_rsa; git clone --single-branch --branch $2 $3"

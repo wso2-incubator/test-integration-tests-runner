@@ -168,12 +168,15 @@ def read_property_files():
                     elif key == "githubSshKey":
                         githubsshkey = val.strip()
                         # ssh-key arrange with the correct key format.
-                        githubKeyStripStart =  githubsshkey.strip( '-----BEGIN RSA PRIVATE KEY-----' )
-                        replaced_key = githubKeyStripStart.replace(' ', '\n')
-                        keyend = "-----END RSA PRIVATE KEY-----"
                         keystart = "-----BEGIN RSA PRIVATE KEY-----"
-                        sshKey = replaced_key[:-1]
-                        sshKeyvalue = keystart + '\n' + sshKey + "==\n" + keyend
+                        keyend = "-----END RSA PRIVATE KEY-----"
+                        githubKeyStripStart =  githubsshkey.split(keystart,1)[1]
+                        githubKeyStripStart =  githubKeyStripStart.split(keyend,1)[0]
+                        replaced_key = githubKeyStripStart.replace(' ', '\n')
+                        # remove the new line character at the start of the string replaced_key
+                        sshKey = replaced_key[1:]
+                        # append padding
+                        sshKeyvalue = keystart + "\n" + sshKey + "==\n" + keyend
     else:
         raise Exception("Test Plan Property file or Infra Property file is not in the workspace: " + workspace)
 
@@ -507,6 +510,7 @@ def build_module_support(module_path):
 def clone_repo():
     """Clone the product repo
     """
+    logger.info('Cloning the repo: Initiation')
     try:
         if test_mode == "WUM":
             subprocess.call(['bash', 'clone_product_repo_wum.sh', sshKeyvalue, git_branch, git_repo_url])
@@ -823,4 +827,3 @@ def set_custom_testng(testng, testng_svr):
         # replace testng server mgt source
         replace_file(testng_server_mgt_source, testng_server_mgt_destination)
         logger.info("=== Customized testng files are copied to destination. ===")
-

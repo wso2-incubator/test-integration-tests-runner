@@ -128,12 +128,17 @@ getChannelList() {
                allchannel=$line
                set -- $allchannel
                channel=$1
+               if [ $product = "wso2-obam" ]; then
+                 echo "wum-sce-test-wso2ob-"$version"-"$channel >> $JOB_LIST
+               elif [ $product = "wso2-obkm" ]; then
+                 echo "wum-sce-test-wso2ob-"$version"-"$channel >> $JOB_LIST
+               fi
                #Generate job list for WUM update by construction its name with product-version-channel
 #               if [ ${TEST_TYPE} == "$TEST_TYPE_INTG" ]; then
 #	            echo "wum-intg-test-"$product"-"$version"-"$channel >> $JOB_LIST
 #	           else
-	            echo "wum-sce-test-"$product"-"$version"-"$channel >> $JOB_LIST
-		    echo "wum-sce-test-k8s-"$product"-"$version"-"$channel >> $JOB_LIST
+               echo "wum-sce-test-"$product"-"$version"-"$channel >> $JOB_LIST
+               echo "wum-sce-test-k8s-"$product"-"$version"-"$channel >> $JOB_LIST
 #	            echo "test-"$product"-"$version"-"$channel >> $JOB_LIST
 #	           fi
             done < "$CHANNEL_LIST"
